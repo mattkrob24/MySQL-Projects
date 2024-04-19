@@ -1,0 +1,114 @@
+# World Life Expectancy Project (Data Cleaning), 2941 Rows
+
+# Using csv dataset from Analystbuilder containing data for each year from 2007 to 2022 for world countries
+# Completed on on MySQLWorkbench
+
+# Code used to evaluate, clean, delete duplicates, enter status' in blank cells, and fill in blanks in LifeExpectancy column below
+
+
+# Inspect data
+SELECT * 
+FROM world_life_expectancy;
+
+# Check for Duplicates
+SELECT country, year, CONCAT(country,year), COUNT(CONCAT(country,year)) AS Count_dupe
+FROM world_life_expectancy
+GROUP BY country, year, CONCAT(country,year)
+HAVING count_dupe > 1;
+
+# Find Row IDs with Duplicates
+SELECT *
+FROM (
+	SELECT row_id,
+	CONCAT(country,year),
+	ROW_NUMBER() OVER(PARTITION BY CONCAT(country,year) ORDER BY CONCAT(country,year)) AS Row_Num
+	FROM world_life_expectancy
+    ) AS Row_table
+WHERE Row_Num > 1
+;
+
+# Delete duplicated rows (removes 3)
+DELETE FROM world_life_expectancy
+WHERE
+	Row_ID IN (
+SELECT row_id
+FROM (
+	SELECT row_id,
+	CONCAT(country,year),
+	ROW_NUMBER() OVER(PARTITION BY CONCAT(country,year) ORDER BY CONCAT(country,year)) AS Row_Num
+	FROM world_life_expectancy
+    ) AS Row_table
+WHERE Row_Num > 1
+)
+;
+
+
+# Revisit data to check for any blanks or Nulls
+SELECT * 
+FROM world_life_expectancy
+WHERE status = '';
+
+# Check all possible statuses in the data
+SELECT DISTINCT(status)
+FROM world_life_expectancy
+WHERE status != '';
+
+
+# Update blank statuses to match entries for same country with existing status of Developing using self join
+UPDATE world_life_expectancy t1
+JOIN world_life_expectancy t2
+	ON t1.country = t2.country
+SET t1.status = 'Developing'
+WHERE t1.status = ''
+AND t2.status != ''
+AND t2.status = 'Developing'
+;
+
+# Update blank statuses to match entries for same country with existing status of Developed using self join
+UPDATE world_life_expectancy t1
+JOIN world_life_expectancy t2
+	ON t1.country = t2.country
+SET t1.status = 'Developed'
+WHERE t1.status = ''
+AND t2.status != ''
+AND t2.status = 'Developed'
+;
+
+# Recheck for any blanks or Nulls in status
+SELECT * 
+FROM world_life_expectancy
+WHERE status = '' OR NULL;
+
+# Check for blank/null in Life Expectancy
+SELECT * 
+FROM world_life_expectancy
+WHERE lifeexpectancy = '' OR NULL;
+
+# Calculate life expectancy for blanks using the average between the previous and the following years data
+SELECT t1.country, t1.year, t1.lifeexpectancy,
+t2.country, t2.year, t2.lifeexpectancy,
+t3.country, t3.year, t3.lifeexpectancy,
+ROUND((t2.lifeexpectancy + t3.lifeexpectancy) / 2, 1)
+FROM world_life_expectancy t1
+JOIN world_life_expectancy t2
+	ON t1.country = t2.country
+	AND t1.year = t2.year - 1
+JOIN world_life_expectancy t3
+	ON t1.country = t3.country
+	AND t1.year = t3.year + 1
+WHERE t1.lifeexpectancy = '';
+
+
+# Populate blanks with the calculated average life expectancy from above
+UPDATE world_life_expectancy t1
+JOIN world_life_expectancy t2
+	ON t1.country = t2.country
+	AND t1.year = t2.year - 1
+JOIN world_life_expectancy t3
+	ON t1.country = t3.country
+	AND t1.year = t3.year + 1
+SET t1.lifeexpectancy = ROUND((t2.lifeexpectancy + t3.lifeexpectancy) / 2, 1)
+WHERE t1.lifeexpectancy = ''
+;
+
+
