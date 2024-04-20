@@ -1,0 +1,104 @@
+# World Life Expectancy Project (Exploratory Data Analysis)
+
+# Used dataset cleaned from previous project in this repo
+# Further cleaning could be done to balance out the amount of zeroes in some of the dataset bringing down averages and increase accuracy
+
+
+
+# View data to see what we want to dig into
+SELECT *
+FROM world_life_expectancy;
+
+
+# Check min/max life expectancies to see range over the past 15 years
+SELECT country, MIN(lifeexpectancy), MAX(lifeexpectancy)
+FROM world_life_expectancy
+GROUP BY country
+ORDER BY country DESC;
+
+
+# There were some 0s so we'll filter those out for now and we'll check the ranges
+SELECT country, MIN(lifeexpectancy), 
+MAX(lifeexpectancy),
+ROUND(MAX(lifeexpectancy) - MIN(lifeexpectancy),1) AS Life_Increase_15_Years
+FROM world_life_expectancy
+GROUP BY country
+HAVING MIN(lifeexpectancy) != 0
+AND MAX(lifeexpectancy) != 0
+ORDER BY Life_Increase_15_Years DESC;
+
+
+# Find global avg of life expectancy combined for all countries by year
+SELECT year, ROUND(AVG(Lifeexpectancy),2)
+FROM world_life_expectancy
+WHERE lifeexpectancy != 0
+AND lifeexpectancy != 0
+GROUP BY year
+ORDER BY year;
+
+
+# Checking for any correlation between life expectancy and GDP
+SELECT country, ROUND(AVG(lifeexpectancy),1) AS Life_Exp, ROUND(AVG(GDP),1) AS GDP
+FROM world_life_expectancy
+GROUP BY country
+HAVING Life_Exp > 0
+AND GDP > 0
+ORDER BY GDP DESC;
+
+# Found a strong correlation between the two
+SELECT 
+SUM(CASE WHEN GDP >= 1500 THEN 1 ELSE 0 END) AS High_GDP_Count,
+AVG(CASE WHEN GDP >= 1500 THEN lifeexpectancy ELSE NULL END) AS High_GDP_Life_Expectancy,
+SUM(CASE WHEN GDP <= 1500 THEN 1 ELSE 0 END) AS Low_GDP_Count,
+AVG(CASE WHEN GDP <= 1500 THEN lifeexpectancy ELSE NULL END) AS Low_GDP_Life_Expectancy
+FROM world_life_expectancy;
+
+
+# Explore correlation between status and life expectancy
+SELECT status, COUNT(DISTINCT country), ROUND(AVG(lifeexpectancy),1) AS Avg_Life_Exp
+FROM world_life_expectancy
+GROUP BY status;
+
+
+# Explore correlation between BMI and life expectancy
+SELECT country, ROUND(AVG(lifeexpectancy),1) AS Life_Exp, ROUND(AVG(BMI),1) AS BMI
+FROM world_life_expectancy
+GROUP BY country
+HAVING Life_Exp > 0
+AND BMI > 0
+ORDER BY BMI DESC;
+
+
+# Rolling total of mortality, life expectancy
+SELECT country, 
+year, 
+lifeexpectancy, 
+adultMortality,
+SUM(adultMortality) OVER(PARTITION BY country ORDER BY year) AS Rolling_Total
+FROM world_life_expectancy;
+
+# Checking same for US and other countries with "United"
+SELECT country, 
+year, 
+lifeexpectancy, 
+adultMortality,
+SUM(adultMortality) OVER(PARTITION BY country ORDER BY year) AS Rolling_Total
+FROM world_life_expectancy
+WHERE country LIKE '%United%';
+
+
+# Countries with the highest amount of HIV/AIDS
+SELECT country, ROUND(AVG(HIVAIDS),2) AS AVG_HIV_AIDS
+FROM world_life_expectancy
+GROUP BY country
+ORDER BY AVG_HIV_AIDS DESC;
+
+
+# See details for country, status, measles, polio, diptheria
+SELECT country, status,
+ROUND(AVG(measles),2) AS avg_measles,
+ROUND(AVG(polio),2) AS avg_polio, 
+ROUND(AVG(diphtheria),2) AS avg_diphtheria
+FROM world_life_expectancy
+GROUP BY country, status
+ORDER BY avg_measles DESC;
