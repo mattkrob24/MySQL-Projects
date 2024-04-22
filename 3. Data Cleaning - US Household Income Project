@@ -1,0 +1,133 @@
+# US Household Income Project (Data Cleaning), 32500 Rows
+
+# Using csv dataset from Analystbuilder (pulled from a US government website) containing data for various incomes in each state
+# Completed on on MySQLWorkbench
+
+# Code used to evaluate, clean, delete duplicates, correct spelling errors, and fill in blanks to prepare it for exploratory data analysis
+
+
+
+
+ALTER TABLE USHouseholdIncome
+RENAME TO US_Household_Income;
+
+ALTER TABLE ushouseholdincome_statistics
+RENAME TO us_household_income_statistics;
+
+# Checking that all the data was imported properly
+SELECT COUNT(row_id)
+FROM US_Household_Income;
+
+SELECT COUNT(id)
+FROM us_household_income_statistics;
+
+# Checking the data for what cleaning needs to be done
+SELECT *
+FROM US_Household_Income;
+
+SELECT *
+FROM us_household_income_statistics;
+
+# Checking for duplicates from US_Household_Income table
+SELECT id, COUNT(id)
+FROM US_Household_Income
+GROUP BY id
+HAVING COUNT(id) > 1;
+
+# Window function to find the second row for every duplicate and remove
+SELECT *
+FROM (
+	SELECT row_id,
+	id,
+	ROW_NUMBER() OVER(PARTITION BY id ORDER BY id) row_num
+	FROM US_Household_Income
+) AS duplicates
+WHERE row_num > 1;
+
+# Removing the duplicated rows
+DELETE FROM US_Household_Income
+WHERE row_id IN (
+	SELECT row_id
+	FROM (
+		SELECT row_id,
+		id,
+		ROW_NUMBER() OVER(PARTITION BY id ORDER BY id) row_num
+		FROM US_Household_Income
+	) AS duplicates
+WHERE row_num > 1)
+;
+
+
+# Doing same as above for us_household_income_statistics table
+SELECT id, COUNT(id)
+FROM us_household_income_statistics
+GROUP BY id
+HAVING COUNT(id) > 1;
+
+# No duplicates found
+
+
+# Check state name for upper case, lower case, and spelling issues
+SELECT DISTINCT state_name, COUNT(state_name)
+FROM US_Household_Income
+GROUP BY state_name;
+;
+
+# Replace mispelled georia with Georgia
+UPDATE US_Household_Income
+SET state_name = 'Georgia'
+WHERE state_name = 'georia';
+
+# Change lowercase alabama with Alabama
+UPDATE US_Household_Income
+SET state_name = 'Alabama'
+WHERE state_name = 'alabama';
+
+
+# Check state abbreviations for errors
+SELECT DISTINCT state_ab
+FROM US_Household_Income;
+
+
+# Fill in blanks in Place column
+SELECT *
+FROM US_Household_Income
+WHERE place = '';
+
+SELECT *
+FROM US_Household_Income
+WHERE county = 'Autauga County';
+
+UPDATE US_Household_Income
+SET place = 'Autaugaville'
+WHERE county = 'Autauga County'
+AND city = 'Vinemont';
+
+# Check type column for any duplicates or errors
+SELECT type, COUNT(type)
+FROM US_Household_Income
+GROUP BY type;
+
+UPDATE US_Household_Income
+SET type = 'Borough'
+WHERE type = 'Boroughs';
+
+
+# Check for zeroes or nulls in Awater, ALand
+SELECT ALand, AWater
+FROM US_Household_Income
+WHERE AWater = 0
+OR AWater = ''
+OR AWater IS NULL;
+
+SELECT ALand, AWater
+FROM US_Household_Income
+WHERE ALand = 0
+OR ALand = ''
+OR ALand IS NULL;
+
+SELECT ALand, AWater
+FROM US_Household_Income
+WHERE (ALand = 0 OR ALand = ''OR ALand IS NULL)
+AND (AWater = 0 OR AWater = ''OR AWater IS NULL);
+
