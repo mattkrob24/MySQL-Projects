@@ -1,7 +1,11 @@
 # World Life Expectancy Project (Exploratory Data Analysis)
 
-# Used dataset cleaned from previous project in this repo
+# Used dataset cleaned from previous project in this repository
 # Further cleaning could be done to balance out the amount of zeroes in some of the dataset bringing down averages and increase accuracy
+
+# Purpose of EDA to explore changes in global life expectancy over time, the correlation between GDP and Life Expectancy, and to understand other effects from variables such as status, BMI, and disease on Life Expectancy 
+
+# Conclusion: Found a strong correlation between GDP and Life Expectancy. Life Expectancy globally has trended upwards over time, and developed nations have a much higher average life expectancy at age 79.2 whereas developing countries have an average age of 66.8. Countries in Africa have a higher average diseases and also lower life expectancy. 
 
 
 
@@ -45,7 +49,7 @@ HAVING Life_Exp > 0
 AND GDP > 0
 ORDER BY GDP DESC;
 
-# Found a strong correlation between the two
+# Found a strong correlation between life expectancy and GDP
 SELECT 
 SUM(CASE WHEN GDP >= 1500 THEN 1 ELSE 0 END) AS High_GDP_Count,
 AVG(CASE WHEN GDP >= 1500 THEN lifeexpectancy ELSE NULL END) AS High_GDP_Life_Expectancy,
