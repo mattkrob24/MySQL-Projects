@@ -7,7 +7,6 @@
 
 
 
-
 ALTER TABLE USHouseholdIncome
 RENAME TO US_Household_Income;
 
