@@ -1,0 +1,110 @@
+# US Household Income Project (EDA), 32500 Rows
+
+# Using csv dataset from Analystbuilder (pulled from a US government website) containing data for various incomes in each state
+# Completed on on MySQLWorkbench
+
+# Purpose of this project is to analyze which states are the largest by land, water. Analyzing which cities and types of living communities have the highest and lowest incomes
+# Performed using aggregate functions, joins, filtering
+
+# Conclusions: Found Alaska had most land and water. Puerto Rico makes the least on average. Highest paid cities tend to be in the North East and California. 
+
+SELECT *
+FROM US_Household_Income;
+
+SELECT *
+FROM us_household_income_statistics;
+
+# Identify Top 10 largest states by land
+SELECT state_name, SUM(ALand), SUM(AWater)
+FROM US_Household_Income
+GROUP BY state_name
+ORDER BY 2 DESC
+LIMIT 10;
+
+# Identify Top 10 largest states by water
+SELECT state_name, SUM(ALand), SUM(AWater)
+FROM US_Household_Income
+GROUP BY state_name
+ORDER BY 3 DESC;
+
+SELECT *
+FROM US_Household_Income u
+JOIN us_household_income_statistics us
+ON u.id = us.id;
+
+# There are many columns that do not have mean, median, stdev. Filtering those out (if they didn't have mean they didn't have the rest)
+SELECT u.state_name, county, type, `primary`, mean, median
+FROM US_Household_Income u
+JOIN us_household_income_statistics us
+ON u.id = us.id
+WHERE mean != 0;
+
+
+# Comparing average household incomes, which ones have the lowest
+SELECT u.state_name, ROUND(AVG(mean),1), ROUND(AVG(median),1)
+FROM US_Household_Income u
+JOIN us_household_income_statistics us
+ON u.id = us.id
+WHERE mean != 0
+GROUP BY u.state_name
+ORDER BY 2;
+
+
+# Top 10 states with highest average income
+SELECT u.state_name, ROUND(AVG(mean),1), ROUND(AVG(median),1)
+FROM US_Household_Income u
+JOIN us_household_income_statistics us
+ON u.id = us.id
+WHERE mean != 0
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 10;
+
+
+# Analyze which types of living communities have higher incomes, highest average income
+SELECT type, ROUND(AVG(mean),1), ROUND(AVG(median),1), COUNT(type)
+FROM US_Household_Income u
+JOIN us_household_income_statistics us
+ON u.id = us.id
+WHERE mean != 0
+GROUP BY type
+ORDER BY 2 DESC;
+
+# Highest median by type
+SELECT type, ROUND(AVG(mean),1), ROUND(AVG(median),1), COUNT(type)
+FROM US_Household_Income u
+JOIN us_household_income_statistics us
+ON u.id = us.id
+WHERE mean != 0
+GROUP BY type
+ORDER BY 3 DESC;
+
+# Look at why 'community' income is so low in the above results, what states are bringing it down?
+SELECT *
+FROM US_Household_Income
+WHERE type = 'Community'
+OR type = 'Urban';
+
+# Puerto Rico is what is causing community and urban to be low as that type is not associated with any other states
+
+
+# Filter out the outliers having low type count, showing highest average income
+SELECT type, ROUND(AVG(mean),1), ROUND(AVG(median),1), COUNT(type)
+FROM US_Household_Income u
+JOIN us_household_income_statistics us
+ON u.id = us.id
+WHERE mean != 0
+GROUP BY 1
+HAVING COUNT(Type) > 100
+ORDER BY 2 DESC;
+
+
+# Investigate which cities have highest average salaries
+SELECT u.state_name, city, ROUND(AVG(mean),1)
+FROM US_Household_Income u
+JOIN us_household_income_statistics us
+ON u.id = us.id
+GROUP BY u.state_name, city
+ORDER BY 3 DESC;
+
+# The majority of the top results are in the northeast and California
