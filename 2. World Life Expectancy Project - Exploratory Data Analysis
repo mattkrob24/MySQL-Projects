@@ -5,23 +5,23 @@
 
 # Purpose of EDA to explore changes in global life expectancy over time, the correlation between GDP and Life Expectancy, and to understand other effects from variables such as status, BMI, and disease on Life Expectancy 
 
-# Conclusion: Found a strong correlation between GDP and Life Expectancy. Life Expectancy globally has trended upwards over time, and developed nations have a much higher average life expectancy at age 79.2 whereas developing countries have an average age of 66.8. Countries in Africa have a higher average diseases and also lower life expectancy. 
+# Conclusion: Found a strong correlation between GDP and Life Expectancy. Life Expectancy globally has trended upwards over time, and developed nations have a much higher average life expectancy at age 79.2 whereas developing countries have an average age of 66.8. Countries in Africa have a higher average disease count and lower life expectancy. 
 
 
 
-# View data to see what we want to dig into
+# View data
 SELECT *
 FROM world_life_expectancy;
 
 
-# Check min/max life expectancies to see range over the past 15 years
+# Checked min/max life expectancies to see range over the past 15 years
 SELECT country, MIN(lifeexpectancy), MAX(lifeexpectancy)
 FROM world_life_expectancy
 GROUP BY country
 ORDER BY country DESC;
 
 
-# There were some 0s so we'll filter those out for now and we'll check the ranges
+# Filtered out 0's to check the ranges
 SELECT country, MIN(lifeexpectancy), 
 MAX(lifeexpectancy),
 ROUND(MAX(lifeexpectancy) - MIN(lifeexpectancy),1) AS Life_Increase_15_Years
@@ -32,7 +32,7 @@ AND MAX(lifeexpectancy) != 0
 ORDER BY Life_Increase_15_Years DESC;
 
 
-# Find global avg of life expectancy combined for all countries by year
+# Found global avg of life expectancy combined for all countries by year
 SELECT year, ROUND(AVG(Lifeexpectancy),2)
 FROM world_life_expectancy
 WHERE lifeexpectancy != 0
@@ -41,7 +41,7 @@ GROUP BY year
 ORDER BY year;
 
 
-# Checking for any correlation between life expectancy and GDP
+# Checked for any correlation between life expectancy and GDP
 SELECT country, ROUND(AVG(lifeexpectancy),1) AS Life_Exp, ROUND(AVG(GDP),1) AS GDP
 FROM world_life_expectancy
 GROUP BY country
@@ -58,13 +58,13 @@ AVG(CASE WHEN GDP <= 1500 THEN lifeexpectancy ELSE NULL END) AS Low_GDP_Life_Exp
 FROM world_life_expectancy;
 
 
-# Explore correlation between status and life expectancy
+# Explored correlation between status and life expectancy
 SELECT status, COUNT(DISTINCT country), ROUND(AVG(lifeexpectancy),1) AS Avg_Life_Exp
 FROM world_life_expectancy
 GROUP BY status;
 
 
-# Explore correlation between BMI and life expectancy
+# Explored correlation between BMI and life expectancy
 SELECT country, ROUND(AVG(lifeexpectancy),1) AS Life_Exp, ROUND(AVG(BMI),1) AS BMI
 FROM world_life_expectancy
 GROUP BY country
@@ -81,7 +81,7 @@ adultMortality,
 SUM(adultMortality) OVER(PARTITION BY country ORDER BY year) AS Rolling_Total
 FROM world_life_expectancy;
 
-# Checking same for US and other countries with "United"
+# Checked same for US and other countries with "United"
 SELECT country, 
 year, 
 lifeexpectancy, 
@@ -98,7 +98,7 @@ GROUP BY country
 ORDER BY AVG_HIV_AIDS DESC;
 
 
-# See details for country, status, measles, polio, diptheria
+# Details for country, status, measles, polio, diptheria
 SELECT country, status,
 ROUND(AVG(measles),2) AS avg_measles,
 ROUND(AVG(polio),2) AS avg_polio, 
